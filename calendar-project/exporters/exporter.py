@@ -1,11 +1,12 @@
 from ics import Calendar as ICSCalendar, Event as ICSEvent
 
 class CalendarExporter:
-    def save(self, filepath: str, events):
+    "Class for exporting data into an .ics file"
+    def export(self, filepath: str, events):
         ics_cal = ICSCalendar()
         for e in events:
             new_event = ICSEvent(
-                name=f"{e.emoji} {e.title}",
+                name=f"{e.emoji}",
                 begin=e.start,
                 end=e.end,
                 location=e.location

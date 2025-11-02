@@ -1,13 +1,18 @@
+from typing import List
+from models.event import Event
+
 class Calendar:
     def __init__(self):
         self.events = []
 
-    def load_from_file(self, filepath: str, importer):
-        self.events = importer.load(filepath)
+    def add_event(self, event: Event):
+        self.events.append(event)
 
-    def apply_transformer(self, transformer):
-        for event in self.events:
-            event.emoji = transformer.transform(event.title)
+    def get_events(self) -> List[Event]:
+        return self.events
 
-    def export_to_file(self, filepath: str, exporter):
-        exporter.save(filepath, self.events)
+    def clear_events(self):
+        self.events = []
+
+    def __len__(self):
+        return len(self.events)

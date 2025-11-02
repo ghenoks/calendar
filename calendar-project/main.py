@@ -1,18 +1,11 @@
-from ics import Calendar
-import re
-
-from ics import Calendar
-
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Hello, world!"
-
-if __name__ == "__main__":
-    app.run(debug=True)
+from flask import Flask, request, jsonify
+from flasgger import Swagger
+import json
+from models.calendar import Calendar
+from exporters.exporter import CalendarExporter
+from importers.importer import CalendarImporter
+from transformers.dictionary_transformer import DictionaryTransformer
+from controllers.calendar_controller import calendar_bp
 
 # dictionary
 # read ics file
@@ -20,46 +13,20 @@ if __name__ == "__main__":
 # replace them with dictionary
 # export it into ics file
 
-"""
-emoji_dict = {
-    "meeting": "💼",
-    "lunch": "🍽️",
-    "coffee": "☕",
-    "project": "📁",
-    "deadline": "⏰",
-    "call": "📞",
-    "birthday": "🎂",
-    "gym": "🏋️",
-    "vacation": "🏖️",
-    "doctor": "🩺",
-}
 
+###  look at what each class does
+# divide the stuff into service layers and controllers, entities
+# look into logic and how to improve
 
-def replace_with_emoji(event_name, emoji_dict):
-    name_lower = event_name.lower()
-    for keyword, emoji in emoji_dict.items():
-        # Simple keyword check (regex word boundaries for better match)
-        if re.search(rf"\b{re.escape(keyword)}\b", name_lower):
-            return emoji
-    # Default fallback emoji if nothing matches
-    return "📅"
+app = Flask(__name__)
+swagger = Swagger(app)
 
-# Read the file
-with open("basic.ics", "r", encoding="utf-8") as f:
-    calendar = Calendar(f.read())
+app.register_blueprint(calendar_bp, url_prefix="/calendar")
 
-# Loop through events
-for event in calendar.events:
-    print("Title:", event.name)
-    print("Start:", event.begin)
-    print("End:", event.end)
-    print("Description:", event.description)
-    print("Location:", event.location)
-    print("-" * 40)
+@app.route("/")
+def home():
+    #TO DO
+    return "Hello, world!"
 
-for event in calendar.events:
-    original_name = event.name or ""
-    emoji_name = replace_with_emoji(original_name, emoji_dict)
-    print(f"Original: {original_name} → {emoji_name}")
-
-"""
+if __name__ == "__main__":
+    app.run(debug=True)

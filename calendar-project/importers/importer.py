@@ -2,6 +2,7 @@ from ics import Calendar as ICSCalendar
 from models.event import Event
 
 class CalendarImporter:
+    "Class for loading .ics data"
     def load(self, filepath: str):
         with open(filepath, 'r') as f:
             ics_cal = ICSCalendar(f.read())
