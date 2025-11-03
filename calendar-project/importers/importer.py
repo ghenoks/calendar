@@ -12,6 +12,11 @@ class CalendarImporter:
                 title=e.name or "Untitled",
                 start=e.begin,
                 end=e.end,
-                location=e.location
+                location=e.location,
+                description=getattr(e, "description", None),
+                uid=getattr(e, "uid", None),
+                status=getattr(e, "status", None),
+                is_all_day=e.all_day
             ))
+
         return events

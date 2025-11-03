@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, request, jsonify
 from services.calendar_service import CalendarService
 
@@ -22,8 +23,13 @@ def transform_calendar():
             in: formData
             type: string
             enum: ["dictionary", "regex", "embedding"]
-            required: false
+            required: true
             description: Transformation method to use.
+          - name: user_mapping
+            in: formData
+            type: string
+            required: false
+            description: Optional JSON string with user-defined emoji mappings.
         responses:
           200:
             description: Transformation completed successfully
@@ -37,12 +43,24 @@ def transform_calendar():
         """
     try:
         file = request.files["file"]
-        method = request.form.get("method", "dictionary")
+        method = request.form.get("method")
+
+
+        user_mapping_json = request.form.get("user_mapping")
+
+        user_mapping = None
+        if user_mapping_json:
+            try:
+                user_mapping = json.loads(user_mapping_json)
+                if not isinstance(user_mapping, dict):
+                    raise ValueError("user_mapping must be a JSON object (dictionary).")
+            except json.JSONDecodeError:
+                return jsonify({"error": "Invalid JSON in user_mapping field."}), 400
 
         tmp_path = "tmp.ics"
         file.save(tmp_path)
 
-        output_path = service.transform_calendar(tmp_path, method)
+        output_path = service.transform_calendar(tmp_path, method, user_mapping)
 
         return jsonify({"message": "Transformation complete", "file": output_path})
 
