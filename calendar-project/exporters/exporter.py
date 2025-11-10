@@ -7,7 +7,6 @@ class CalendarExporter:
         ics_cal = ICSCalendar()
 
         for e in events:
-            # Název — anonymizovaný (emoji) nebo původní
             event_name = f"{e.emoji or ''} {e.title}".strip()
 
             new_event = ICSEvent(
@@ -27,7 +26,6 @@ class CalendarExporter:
                 start_date = e.start.date()
                 end_date = e.end.date()
 
-                # if same day -> add +1 to make DTEND valid
                 if end_date <= start_date:
                     end_date = start_date + timedelta(days=1)
                 else:
