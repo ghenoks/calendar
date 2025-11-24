@@ -1,14 +1,29 @@
 from datetime import timedelta
 from ics import Calendar as ICSCalendar, Event as ICSEvent
+from io import BytesIO, TextIOWrapper
 
 class CalendarExporter:
     """Class for exporting events into an .ics file."""
+
     def export(self, filepath: str, events):
+        ics_cal = self._create_ics_calendar(events)
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.writelines(ics_cal.serialize_iter())
+
+    def export_stream(self, output_stream: BytesIO, events):
+        """
+        Write ICS calendar to an in-memory BytesIO stream.
+        """
+        ics_cal = self.create_ics_calendar(events)
+        ics_str = "".join(ics_cal.serialize_iter())
+        output_stream.write(ics_str.encode("utf-8"))
+        output_stream.seek(0)
+
+    def create_ics_calendar(self, events):
         ics_cal = ICSCalendar()
 
         for e in events:
             event_name = f"{e.emoji or ''} {e.title}".strip()
-
             new_event = ICSEvent(
                 name=event_name,
                 location=e.location,
@@ -39,6 +54,4 @@ class CalendarExporter:
                 new_event.end = e.end
 
             ics_cal.events.add(new_event)
-
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.writelines(ics_cal.serialize_iter())
+        return ics_cal

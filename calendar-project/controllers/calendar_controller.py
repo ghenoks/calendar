@@ -1,5 +1,6 @@
-import json
-from flask import Blueprint, request, jsonify
+import base64
+from io import BytesIO
+from flask import Blueprint, request, jsonify, send_file
 from services.calendar_service import CalendarService
 
 
@@ -9,60 +10,70 @@ service = CalendarService()
 @calendar_bp.route("/transform", methods=["POST"])
 def transform_calendar():
     """
-        Upload and transform a calendar file.
+        Transform an iCal (.ics) calendar to use emojis for events.
         ---
+        tags:
+          - Calendar
         consumes:
-          - multipart/form-data
+          - application/json
         parameters:
-          - name: file
-            in: formData
-            type: file
+          - in: body
+            name: body
             required: true
-            description: The iCal (.ics) file to transform.
-          - name: method
-            in: formData
-            type: string
-            enum: ["dictionary", "regex", "embedding"]
-            required: true
-            description: Transformation method to use.
-          - name: user_mapping
-            in: formData
-            type: string
-            required: false
-            description: Optional JSON string with user-defined emoji mappings.
-        responses:
-          200:
-            description: Transformation completed successfully
             schema:
               type: object
               properties:
-                message:
+                file_base64:
                   type: string
-                file:
+                  description: Base64-encoded .ics file
+                method:
                   type: string
+                  enum: ["dictionary", "embedding"]
+                  description: Transformation method
+                user_mapping:
+                  type: object
+                  description: Optional user-defined emoji mappings
+        responses:
+          200:
+            description: Transformed .ics file
+            content:
+              text/calendar:
+                schema:
+                  type: string
+          400:
+            description: Bad request
+          500:
+            description: Internal server error
         """
     try:
-        file = request.files["file"]
-        method = request.form.get("method")
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "JSON payload required"}), 400
 
+        file_base64 = data.get("file_base64")
+        method = data.get("method")
+        user_mapping = data.get("user_mapping", None)
 
-        user_mapping_json = request.form.get("user_mapping")
+        if not file_base64 or not method:
+            return jsonify({"error": "file_base64 and method are required"}), 400
 
-        user_mapping = None
-        if user_mapping_json:
-            try:
-                user_mapping = json.loads(user_mapping_json)
-                if not isinstance(user_mapping, dict):
-                    raise ValueError("user_mapping must be a JSON object (dictionary).")
-            except json.JSONDecodeError:
-                return jsonify({"error": "Invalid JSON in user_mapping field."}), 400
+        if method not in ["dictionary", "embedding"]:
+            return jsonify({"error": f"Invalid method: {method}"}), 400
 
-        tmp_path = "tmp.ics"
-        file.save(tmp_path)
+        # Decode base64 to BytesIO stream
+        file_bytes = base64.b64decode(file_base64)
+        input_stream = BytesIO(file_bytes)
 
-        output_path = service.transform_calendar(tmp_path, method, user_mapping)
+        # Transform
+        output_stream = service.transform_calendar_stream(input_stream, method, user_mapping)
 
-        return jsonify({"message": "Transformation complete", "file": output_path})
+        output_stream.seek(0)
+        output_base64 = base64.b64encode(output_stream.read()).decode("utf-8")
+
+        return jsonify({
+            "message": "Transformation complete",
+            "file_base64": output_base64
+        }), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e)}), 500

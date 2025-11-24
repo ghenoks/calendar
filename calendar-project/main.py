@@ -2,8 +2,12 @@ from flask import Flask, request, jsonify
 from flasgger import Swagger
 from controllers.calendar_controller import calendar_bp
 
-# TODO - fix why it adds extra day to end
-# TODO - add dict for different languages and language choice option
+# TODO - test for non all day events      ✔️
+# TODO - fix why it adds extra day to end  ✔️
+# TODO - add dict for different languages -> language detection
+# TODO - error handling in importer
+
+# TODO - filter event info like google calls etc
 
 # TODO - add other transformers
 # TODO - embedding method
@@ -25,6 +29,7 @@ from controllers.calendar_controller import calendar_bp
 # TODO - database for custom mappings
 
 # TODO - logs
+# TODO - huge .ics files
 
 
 app = Flask(__name__)

@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 from models.calendar import Calendar
 from transformers.dictionary_transformer import DictionaryTransformer
 from exporters.exporter import CalendarExporter
@@ -12,9 +13,9 @@ class CalendarService:
         self.exporter = exporter or CalendarExporter()
 
     def transform_calendar(self, filepath: str, method: str, user_mapping: dict | None = None) -> str:
-        # Import .ics file into calendar object
+        # old transform using filepath not streams
         calendar = Calendar()
-        for event in self.importer.load(filepath):
+        for event in self.importer.load_file(filepath):
             calendar.add_event(event)
 
         # Select transformation strategy
@@ -29,6 +30,24 @@ class CalendarService:
         self.exporter.export(output_path, calendar.get_events())
 
         return output_path
+
+    def transform_calendar_stream(self, input_stream: BytesIO, method: str,user_mapping: dict | None = None) -> BytesIO:
+        # transform using streams
+        # Load calendar from stream
+        calendar = Calendar()
+        for event in self.importer.load_stream(input_stream):
+            calendar.add_event(event)
+
+        # Select transformer
+        transformer = self._get_transformer(method, user_mapping)
+        # Apply transformation
+        for event in calendar.get_events():
+            event.emoji = transformer.transform(event.title)
+        # Export to in-memory stream
+        output_stream = BytesIO()
+        self.exporter.export_stream(output_stream, calendar.get_events())
+        output_stream.seek(0)
+        return output_stream
 
     def _get_transformer(self, method: str, user_mapping: dict | None = None):
         # Returns the correct transformer
