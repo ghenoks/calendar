@@ -1,10 +1,11 @@
 import json
 from io import BytesIO
 from models.calendar import Calendar
-from transformers.dictionary_transformer import DictionaryTransformer
+from transformers_class.dictionary_transformer import DictionaryTransformer
 from exporters.exporter import CalendarExporter
 from importers.importer import CalendarImporter
-from transformers.priority_transformer import PriorityTransformer
+from transformers_class.embedding_transformer import EmbeddingTransformer
+from transformers_class.priority_transformer import PriorityTransformer
 
 
 class CalendarService:
@@ -50,14 +51,17 @@ class CalendarService:
         return output_stream
 
     def _get_transformer(self, method: str, user_mapping: dict | None = None):
+        with open("utils/emoji_dict.json") as f:
+            emoji_dict = {k.lower(): v for k, v in json.load(f).items()}
+
         # Returns the correct transformer
         if method == "dictionary":
-            with open("utils/emoji_dict.json") as f:
-                emoji_dict = {k.lower(): v for k, v in json.load(f).items()}
-
             base_transformer = DictionaryTransformer(emoji_dict)
 
-        # TODO: add other transformers
+        elif method == "embedding":
+            base_transformer = EmbeddingTransformer(emoji_dict)
+
+        # TODO: add other transformers_class
 
         # Error handling
         else:

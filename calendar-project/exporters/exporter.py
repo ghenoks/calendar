@@ -1,6 +1,6 @@
 from datetime import timedelta
 from ics import Calendar as ICSCalendar, Event as ICSEvent
-from io import BytesIO, TextIOWrapper
+from io import BytesIO
 
 class CalendarExporter:
     """Class for exporting events into an .ics file."""

@@ -1,13 +1,14 @@
+import requests
 import base64
 from io import BytesIO
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify
 from services.calendar_service import CalendarService
 
 
 calendar_bp = Blueprint("calendar", __name__)
 service = CalendarService()
 
-@calendar_bp.route("/transform", methods=["POST"])
+@calendar_bp.route("/transformation", methods=["POST"])
 def transform_calendar():
     """
         Transform an iCal (.ics) calendar to use emojis for events.
@@ -23,9 +24,9 @@ def transform_calendar():
             schema:
               type: object
               properties:
-                file_base64:
+                ics_url:
                   type: string
-                  description: Base64-encoded .ics file
+                  description: url of .ics file
                 method:
                   type: string
                   enum: ["dictionary", "embedding"]
@@ -50,19 +51,26 @@ def transform_calendar():
         if not data:
             return jsonify({"error": "JSON payload required"}), 400
 
-        file_base64 = data.get("file_base64")
+        ics_url = data.get("ics_url")
         method = data.get("method")
         user_mapping = data.get("user_mapping", None)
 
-        if not file_base64 or not method:
-            return jsonify({"error": "file_base64 and method are required"}), 400
+        if not ics_url or not method:
+            return jsonify({"error": "ics_url and method are required"}), 400
 
         if method not in ["dictionary", "embedding"]:
             return jsonify({"error": f"Invalid method: {method}"}), 400
 
-        # Decode base64 to BytesIO stream
-        file_bytes = base64.b64decode(file_base64)
-        input_stream = BytesIO(file_bytes)
+        # Donwnload
+        resp = requests.get(ics_url, timeout=10)
+        if resp.status_code != 200:
+            return jsonify({"error": "Failed to download ICS file"}), 400
+
+        content_type = resp.headers.get("Content-Type", "").lower()
+        if "calendar" not in content_type and "octet-stream" not in content_type:
+            return jsonify({"error": "URL did not return a calendar file"}), 400
+
+        input_stream = BytesIO(resp.content)
 
         # Transform
         output_stream = service.transform_calendar_stream(input_stream, method, user_mapping)
@@ -72,7 +80,7 @@ def transform_calendar():
 
         return jsonify({
             "message": "Transformation complete",
-            "file_base64": output_base64
+            "ics_base64": output_base64
         }), 200
 
     except Exception as e:

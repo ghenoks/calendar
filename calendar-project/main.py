@@ -9,7 +9,7 @@ from controllers.calendar_controller import calendar_bp
 
 # TODO - filter event info like google calls etc
 
-# TODO - add other transformers
+# TODO - add other transformers_class
 # TODO - embedding method
 
 # TODO - add user defined mapping

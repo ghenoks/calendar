@@ -1,0 +1,18 @@
+# Python virtual environments
+calendar-project/.venv/
+calendar-project/.venv1/
+venv/
+env/
+pyt/
+
+# Bytecode / caches
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / editor
+.idea/
+
+# Optional: OS files
+.DS_Store
+Thumbs.db
